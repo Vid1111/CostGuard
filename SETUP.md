@@ -41,16 +41,34 @@ AWS_DEFAULT_REGION=us-east-1
 ## 4. Run
 
 ```bash
-# (entry point to be added in Week 3-4)
 python -m src.main
 ```
 
-## 5. Output
+As of Week 3-4, this connects to AWS, lists every RDS instance in the
+configured region, and prints a table with type, engine, region,
+storage, and an estimated monthly cost for each. Metrics analysis and
+the HTML report are not wired in yet — those land in Weeks 5-10.
 
-The tool generates an HTML report in the `reports/` folder showing
-current spend, recommendations, and total potential savings.
+## 5. Run the Tests
+
+```bash
+python -m pytest tests/ -v
+```
+
+Tests use [moto](https://github.com/getmoto/moto) to mock AWS, so
+they run without real credentials or an AWS account. Before a demo
+or a real milestone check, also run `python -m src.main` against an
+actual sandbox AWS account (see section 2) — mocked tests only prove
+the code path works, not that our assumptions about the real API
+response shape are correct.
+
+## 6. Output (Weeks 9-10)
+
+The finished tool will generate an HTML report in the `reports/`
+folder showing current spend, recommendations, and total potential
+savings.
 
 ---
 
-*This guide will be filled in further as the AWS connector, metrics
-collector, and report generator are built (Weeks 3-10).*
+*This guide will be filled in further as the metrics collector,
+analysis engine, and report generator are built (Weeks 5-10).*

@@ -1,0 +1,116 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="CostGuard Project Structure" id="costguard-structure">
+    <mxGraphModel dx="900" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Root -->
+        <mxCell id="r0" value="costguard/" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="460" y="40" width="180" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Top-level files -->
+        <mxCell id="f0" value="README.md" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="40" y="140" width="140" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="f1" value="SETUP.md" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="200" y="140" width="140" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="f2" value="requirements.txt" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="360" y="140" width="140" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="f3" value=".gitignore" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="520" y="140" width="140" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="f4" value=".env.example" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="680" y="140" width="140" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- Folders row -->
+        <mxCell id="d0" value="src/" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="360" y="240" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="d1" value="tests/" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="530" y="240" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="d2" value="templates/" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="700" y="240" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="d3" value="docs/" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="870" y="240" width="140" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- src/ children -->
+        <mxCell id="s0" value="aws_connector/&#10;(Person A)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="20" y="340" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="s1" value="metrics/&#10;(Person B)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="190" y="340" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="s2" value="analysis/&#10;(Shared)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="360" y="340" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="s3" value="recommendations/&#10;(Person C)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="530" y="340" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="s4" value="report/&#10;(Person C)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="700" y="340" width="150" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- __init__.py under each src child -->
+        <mxCell id="i0" value="__init__.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="35" y="420" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="i1" value="__init__.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="205" y="420" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="i2" value="__init__.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="375" y="420" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="i3" value="__init__.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="545" y="420" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="i4" value="__init__.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="715" y="420" width="120" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- docs/ child -->
+        <mxCell id="doc0" value="architecture.md" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="855" y="340" width="170" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Edges: root to top files -->
+        <mxCell id="e0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="r0" target="f0"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="r0" target="f1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="r0" target="f2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="r0" target="f3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="r0" target="f4"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- Edges: root to folders -->
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="r0" target="d0"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="r0" target="d1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="r0" target="d2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="r0" target="d3"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- Edges: src/ to children -->
+        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="d0" target="s0"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="d0" target="s1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="d0" target="s2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="d0" target="s3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="d0" target="s4"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- Edges: src children to init files -->
+        <mxCell id="e14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="s0" target="i0"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="s1" target="i1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="s2" target="i2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="s3" target="i3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="s4" target="i4"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- Edge: docs/ to architecture.md -->
+        <mxCell id="e19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="d3" target="doc0"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

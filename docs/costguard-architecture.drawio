@@ -1,0 +1,66 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="CostGuard Architecture" id="costguard-arch">
+    <mxGraphModel dx="900" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Input box -->
+        <mxCell id="n0" value="AWS Credentials Input" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="300" y="40" width="220" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- AWS Connector -->
+        <mxCell id="n1" value="AWS Connector&#10;(Person A)&#10;list RDS instances&#10;type, cost, region, storage" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="280" y="140" width="260" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Metrics Collector -->
+        <mxCell id="n2" value="Metrics Collector&#10;(Person B)&#10;CloudWatch: CPU / memory /&#10;storage / connections" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="280" y="260" width="260" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Analysis Engine -->
+        <mxCell id="n3" value="Analysis Engine&#10;(Shared)&#10;applies over-sizing thresholds&#10;CPU &lt; 20%, Memory &lt; 30%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="280" y="380" width="260" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Recommendation Engine -->
+        <mxCell id="n4" value="Recommendation Engine&#10;(Person C)&#10;smaller instance type +&#10;savings calculation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="280" y="500" width="260" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Report Generator -->
+        <mxCell id="n5" value="Report Generator&#10;(Person C)&#10;renders HTML report" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="280" y="620" width="260" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Output box -->
+        <mxCell id="n6" value="HTML Report&#10;(current spend, recommendations, savings)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="270" y="730" width="280" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Arrows -->
+        <mxCell id="e0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="n0" target="n1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="n1" target="n2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="n2" target="n3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="n3" target="n4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="n4" target="n5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="n5" target="n6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
