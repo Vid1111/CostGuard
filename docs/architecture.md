@@ -44,10 +44,6 @@ can be tested or swapped independently.
 
 ## 4. Data Contracts
 
-These shapes are fixed early so modules can be built in parallel without
-waiting on each other. Treat changes to these as breaking changes that
-need a heads-up to the team.
-
 ### `DBInstance` (output of `aws_connector`)
 ```python
 {
@@ -74,6 +70,9 @@ need a heads-up to the team.
     "observation_window_days": 14
 }
 ```
+Note: `memory_avg_pct` / `memory_max_pct` come back as `None` when the
+instance type isn't in `metrics/instance_memory.py`'s RAM table — the
+collector never guesses a memory percentage it can't actually compute.
 
 ### `AnalysisResult` (output of `analysis`)
 ```python
@@ -102,9 +101,15 @@ need a heads-up to the team.
 
 - CPU average < 20% over the observation window -> candidate for downgrade
 - Memory average < 30% over the observation window -> candidate for downgrade
-- **Minimum observation window: 14 days.** Shorter windows are rejected
-  by the analysis stage to avoid flagging instances based on a quiet
-  weekend or a one-off low-traffic period.
+- **Minimum observation window: 14 days**, enforced in code
+  (`metrics/collector.py`, `MIN_OBSERVATION_DAYS`) before any CloudWatch
+  call is even made.
+- **Data coverage check:** if CloudWatch returns fewer than 50% of the
+  expected hourly datapoints for the window (e.g. a new, stopped, or
+  misidentified instance), the collector raises
+  `InsufficientMetricsError` instead of returning a misleadingly
+  confident average. The Analysis Engine should treat these instances
+  as "skipped — insufficient data," not "healthy."
 - Risk level is set by how close usage is to the recommended instance's
   ceiling: comfortable margin = low risk, tight margin = medium/high.
 
@@ -117,8 +122,13 @@ need a heads-up to the team.
   file, loaded via `python-dotenv` for local dev. Nothing hardcoded,
   nothing committed.
 - **Pricing data:** static lookup table (instance type + region ->
-  monthly cost) checked into `src/recommendations/pricing.py` or a CSV,
-  since the AWS Price List API is verbose for V1 scope.
+  monthly cost), `aws_connector/pricing.py`.
+- **Memory specs:** static lookup table (instance type -> total RAM),
+  `metrics/instance_memory.py` — needed to convert CloudWatch's
+  `FreeableMemory` (bytes) into a usage percentage, since AWS has no
+  API that returns total RAM for an RDS instance class.
+- **Testing:** pytest + moto (mocks both RDS and CloudWatch, so the
+  full suite runs with no real AWS account).
 
 ## 7. Security Notes
 
@@ -129,9 +139,23 @@ need a heads-up to the team.
   `cloudwatch:GetMetricStatistics`) — the tool never needs write access
   in V1.
 
-## 8. Open Questions for Week 3-4
+## 8. Decisions Made in Weeks 3-6
 
-- Which CloudWatch API: `get_metric_statistics` (simpler) vs
-  `get_metric_data` (batched, more efficient for many instances)?
-- Where does the instance-type pricing table come from — static CSV
-  now, AWS Price List API later (V2)?
+- **CloudWatch API choice (resolved):** we used `get_metric_statistics`
+  (one metric at a time) rather than `get_metric_data` (batched). For
+  V1's scale — a handful of instances, 4 metrics each — the simpler,
+  more readable API was worth the extra call count. Worth revisiting
+  `get_metric_data` in V2 if an account has many dozens of instances,
+  since it batches requests and reduces API call volume.
+- **Pricing table (known limitation):** still static, still
+  compute-only — doesn't yet account for Multi-AZ (roughly doubles
+  compute + storage cost) or storage/IOPS pricing. Tracked as a V2
+  TODO in `pricing.py`.
+
+## 9. Open Questions for Week 7-8
+
+- Exact thresholds for "low/medium/high" risk level in recommendations
+  — needs a concrete rule, not just a feel.
+- How to handle an instance where CPU is low but memory is high (or
+  vice versa) — is it still "oversized," and what's the recommended
+  downgrade in that mixed case?

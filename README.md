@@ -9,12 +9,12 @@ save per month and per year.
 
 ## Status
 
- In development — V1 scope. See [docs/architecture.md](docs/architecture.md)
+🚧 In development — V1 scope. See [docs/architecture.md](docs/architecture.md)
 for the system design.
 
 - [x] Week 1-2: Architecture & project structure
 - [x] Week 3-4: AWS Connection — can list all RDS databases
-- [ ] Week 5-6: CloudWatch metrics
+- [x] Week 5-6: CloudWatch metrics — can show usage metrics for each database
 - [ ] Week 7-8: Analysis & recommendations
 - [ ] Week 9-10: HTML report
 - [ ] Week 11-12: Polish, testing, demo
