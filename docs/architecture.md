@@ -63,6 +63,8 @@ can be tested or swapped independently.
     "instance_id": "prod-orders-db",
     "cpu_avg_pct": 15.2,
     "cpu_max_pct": 34.0,
+    "cpu_min_pct": 2.1,
+    "cpu_p95_pct": 22.0,            # 95th percentile of hourly peaks
     "memory_avg_pct": 20.1,
     "memory_max_pct": 41.0,
     "storage_used_gb": 210,
@@ -78,8 +80,9 @@ collector never guesses a memory percentage it can't actually compute.
 ```python
 {
     "instance_id": "prod-orders-db",
+    "status": "oversized",          # or "right_sized" / "insufficient_data"
     "is_oversized": True,
-    "reason": "cpu_avg_pct < 20 and memory_avg_pct < 30"
+    "reason": "CPU avg 15.2% / p95 peak 22.0% and memory avg 20.1% / peak 41.0% are below thresholds"
 }
 ```
 
@@ -93,14 +96,23 @@ collector never guesses a memory percentage it can't actually compute.
     "recommended_cost": 500.00,
     "monthly_savings": 1500.00,
     "annual_savings": 18000.00,
-    "risk_level": "medium"
+    "risk_level": "medium",
+    "projected_cpu_peak_pct": 60.0,    # usage scaled onto the smaller size
+    "projected_cpu_max_pct": 88.0,      # busiest minute on the smaller size
+    "projected_memory_peak_pct": 60.0,
+    "reason": "..."                   # copied from the AnalysisResult
 }
 ```
 
 ## 5. Over-Sizing Thresholds (V1)
 
-- CPU average < 20% over the observation window -> candidate for downgrade
-- Memory average < 30% over the observation window -> candidate for downgrade
+- CPU average < 20% **and** CPU p95 peak < 50% -> CPU is "always low"
+  (p95 = 95th percentile of the hourly maximums: rare one-off spikes are
+  ignored, regular busy hours are not)
+- Memory average < 30% **and** memory peak < 60% -> memory is "always low"
+- An instance is over-sized only when **both** are low (the brief says
+  "always" low, so the peak caps stop a low average that hides big
+  spikes from being shrunk). If memory % is unknown, CPU alone decides.
 - **Minimum observation window: 14 days**, enforced in code
   (`metrics/collector.py`, `MIN_OBSERVATION_DAYS`) before any CloudWatch
   call is even made.
@@ -110,8 +122,16 @@ collector never guesses a memory percentage it can't actually compute.
   `InsufficientMetricsError` instead of returning a misleadingly
   confident average. The Analysis Engine should treat these instances
   as "skipped — insufficient data," not "healthy."
-- Risk level is set by how close usage is to the recommended instance's
-  ceiling: comfortable margin = low risk, tight margin = medium/high.
+- **Target size** (`recommendations/engine.py`): peak usage is projected
+  onto each smaller size in the same family by the vCPU / RAM ratio
+  (15% CPU on 8 vCPUs = 60% on 2 vCPUs). The smallest size whose
+  projected CPU p95 stays under 75% and memory peak under 80% is
+  recommended, as long as the single busiest CPU minute still fits
+  (projected <= 100%).
+- **Risk level** is high if the busiest CPU minute would exceed 90%
+  on the new size; otherwise it's the higher projected peak:
+  <= 50% low, <= 65% medium, above that high. Unknown memory is never
+  low risk.
 
 ## 6. Tech Stack
 
@@ -147,15 +167,21 @@ collector never guesses a memory percentage it can't actually compute.
   more readable API was worth the extra call count. Worth revisiting
   `get_metric_data` in V2 if an account has many dozens of instances,
   since it batches requests and reduces API call volume.
-- **Pricing table (known limitation):** still static, still
-  compute-only — doesn't yet account for Multi-AZ (roughly doubles
-  compute + storage cost) or storage/IOPS pricing. Tracked as a V2
-  TODO in `pricing.py`.
+- **Pricing table (known limitation):** still static and compute-only.
+  Multi-AZ is now priced (instance cost x2). Storage/IOPS aren't priced,
+  which doesn't affect savings since a downgrade keeps the same storage.
 
-## 9. Open Questions for Week 7-8
+## 9. Decisions Made in Weeks 7-8
 
-- Exact thresholds for "low/medium/high" risk level in recommendations
-  — needs a concrete rule, not just a feel.
-- How to handle an instance where CPU is low but memory is high (or
-  vice versa) — is it still "oversized," and what's the recommended
-  downgrade in that mixed case?
+- **Risk levels:** concrete rule based on projected peak usage on the
+  recommended size (see section 5).
+- **Mixed CPU/memory case:** not over-sized. Every step down within an
+  RDS family halves vCPUs and RAM together, so a busy resource blocks
+  the downgrade. Switching family (e.g. r5 -> m5 for a CPU-light,
+  memory-heavy load) is left for V2.
+- **CPU p95 instead of max:** sizing on the single busiest minute let
+  one backup or migration block an otherwise-safe downgrade. Memory
+  keeps the true peak, since running out of RAM is worse than running
+  hot on CPU.
+- **Burstable t3:** all t3 sizes have 2 vCPUs, so a t3 downgrade is
+  limited by memory only; CPU credit balance isn't checked in V1.

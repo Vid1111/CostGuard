@@ -113,6 +113,10 @@ class TestPricing:
         cost = estimate_monthly_cost("db.t3.micro", "eu-west-1")
         assert cost == round(12.41 * 1.10, 2)
 
+    def test_multi_az_doubles_cost(self):
+        assert estimate_monthly_cost("db.r5.large", "us-east-1", multi_az=True) == 350.40
+        assert estimate_monthly_cost("db.t3.micro", "eu-west-1", multi_az=True) == round(12.41 * 1.10 * 2, 2)
+
     def test_unknown_instance_type_returns_zero(self):
         assert estimate_monthly_cost("db.made.up", "us-east-1") == 0.0
 

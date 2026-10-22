@@ -4,4 +4,4 @@ python-dotenv>=1.0
 
 # dev / test only
 pytest>=8.0
-moto[rds]>=5.0
+moto[rds,cloudwatch]>=5.0

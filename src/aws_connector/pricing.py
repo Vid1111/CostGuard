@@ -25,26 +25,33 @@ _REGION_MULTIPLIER = {
 }
 
 
-def estimate_monthly_cost(instance_type: str, region: str) -> float:
+# a Multi-AZ deployment runs a synchronous standby of the same size,
+# so AWS bills the instance-hours twice
+MULTI_AZ_MULTIPLIER = 2
+
+
+def estimate_monthly_cost(instance_type: str, region: str, multi_az: bool = False) -> float:
     """
-    Look up (or estimate) the on-demand monthly cost for an RDS
-    instance type in a given region.
+    Look up (or estimate) the on-demand monthly compute cost for an RDS
+    instance type in a given region, doubled for Multi-AZ deployments.
 
     Falls back to the us-east-1 price adjusted by a rough regional
     multiplier if the exact (type, region) pair isn't in the table,
     and to 0.0 (with the caller expected to flag it) if the instance
     type itself is unknown.
     """
+    az_multiplier = MULTI_AZ_MULTIPLIER if multi_az else 1
+
     key = (instance_type, region)
     if key in _PRICING_TABLE:
-        return _PRICING_TABLE[key]
+        return round(_PRICING_TABLE[key] * az_multiplier, 2)
 
     base = _PRICING_TABLE.get((instance_type, "us-east-1"))
     if base is None:
         return 0.0  # unknown instance type — caller should flag this instance
 
     multiplier = _REGION_MULTIPLIER.get(region, 1.10)
-    return round(base * multiplier, 2)
+    return round(base * multiplier * az_multiplier, 2)
 
 
 def is_known_instance_type(instance_type: str) -> bool:

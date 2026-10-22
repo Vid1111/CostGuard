@@ -27,7 +27,7 @@ cd costguard
 python -m venv venv
 source venv/bin/activate    # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env
+cp .env.example .env        # Windows: copy .env.example .env
 ```
 
 Edit `.env` and fill in:
@@ -44,14 +44,16 @@ AWS_DEFAULT_REGION=us-east-1
 python -m src.main
 ```
 
-As of Week 5-6, this connects to AWS, lists every RDS instance in the
-configured region, then pulls 14 days of CloudWatch usage (CPU,
-memory, storage, connections) for each one and prints both tables.
+As of Week 7-8, this connects to AWS, lists every RDS instance in the
+configured region, pulls 14 days of CloudWatch usage (CPU, memory,
+storage, connections) for each one, flags over-sized instances, and
+prints recommended downgrades with monthly/yearly savings and a risk
+level.
 
 A database younger than the 14-day observation window (or one
 CloudWatch has no data for) is shown as "skipped" with a reason,
-rather than silently printed with misleading zeros. Analysis and the
-HTML report are not wired in yet — those land in Weeks 7-10.
+rather than silently printed with misleading zeros. The HTML report
+lands in Weeks 9-10.
 
 ## 5. Run the Tests
 
@@ -61,7 +63,7 @@ python -m pytest tests/ -v
 
 Tests use [moto](https://github.com/getmoto/moto) to mock AWS (both
 RDS and CloudWatch), so they run without real credentials or an AWS
-account — 19 tests as of Week 5-6. Before a demo or a real milestone
+account — 45 tests as of Week 7-8. Before a demo or a real milestone
 check, also run `python -m src.main` against an actual sandbox AWS
 account (see section 2) — mocked tests only prove the code path
 works, not that our assumptions about the real API response shape
@@ -75,5 +77,5 @@ savings.
 
 ---
 
-*This guide will be filled in further as the analysis engine and
-report generator are built (Weeks 7-10).*
+*This guide will be filled in further as the report generator is
+built (Weeks 9-10).*

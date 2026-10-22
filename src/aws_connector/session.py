@@ -34,3 +34,9 @@ def get_rds_client(session: boto3.Session = None):
     """Return a boto3 RDS client, building a session if one isn't passed in."""
     session = session or get_session()
     return session.client("rds")
+
+
+def get_cloudwatch_client(session: boto3.Session = None):
+    """Return a boto3 CloudWatch client, building a session if one isn't passed in."""
+    session = session or get_session()
+    return session.client("cloudwatch")

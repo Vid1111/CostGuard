@@ -17,7 +17,8 @@ def _to_db_instance(raw: dict, region: str) -> dict:
     contract (see docs/architecture.md, section 4).
     """
     instance_type = raw["DBInstanceClass"]
-    monthly_cost = estimate_monthly_cost(instance_type, region)
+    multi_az = raw.get("MultiAZ", False)
+    monthly_cost = estimate_monthly_cost(instance_type, region, multi_az)
 
     db_instance = {
         "instance_id": raw["DBInstanceIdentifier"],
@@ -26,7 +27,7 @@ def _to_db_instance(raw: dict, region: str) -> dict:
         "region": region,
         "monthly_cost": monthly_cost,
         "storage_allocated_gb": raw.get("AllocatedStorage", 0),
-        "multi_az": raw.get("MultiAZ", False),
+        "multi_az": multi_az,
     }
 
     if not is_known_instance_type(instance_type):

@@ -11,6 +11,7 @@ never modifies anything in the account.
 """
 
 import logging
+import math
 from datetime import datetime, timedelta, timezone
 
 from botocore.exceptions import ClientError, NoCredentialsError, EndpointConnectionError
@@ -71,6 +72,21 @@ def _min(datapoints: list[dict], key: str = "Minimum") -> float | None:
     return round(min(values), 2) if values else None
 
 
+def _percentile(datapoints: list[dict], pct: float, key: str = "Maximum") -> float | None:
+    """
+    Nearest-rank percentile of one statistic across all datapoints.
+
+    Applied to the hourly Maximum values this answers: "in pct% of
+    hours, the busiest minute stayed at or below X" — a peak that
+    ignores rare one-off spikes but still reflects regular busy hours.
+    """
+    values = sorted(dp[key] for dp in datapoints if key in dp)
+    if not values:
+        return None
+    rank = max(1, math.ceil(pct / 100 * len(values)))
+    return round(values[rank - 1], 2)
+
+
 def get_metrics_summary(
     instance_id: str,
     instance_type: str,
@@ -107,7 +123,7 @@ def get_metrics_summary(
     try:
         client = get_cloudwatch_client()
 
-        cpu = _query_metric(client, "CPUUtilization", instance_id, start, end, ["Average", "Maximum"])
+        cpu = _query_metric(client, "CPUUtilization", instance_id, start, end, ["Average", "Maximum", "Minimum"])
         memory = _query_metric(client, "FreeableMemory", instance_id, start, end, ["Average", "Minimum"])
         connections = _query_metric(client, "DatabaseConnections", instance_id, start, end, ["Average"])
         storage = _query_metric(client, "FreeStorageSpace", instance_id, start, end, ["Average"])
@@ -147,6 +163,8 @@ def get_metrics_summary(
 
     cpu_avg_pct = _average(cpu, "Average")
     cpu_max_pct = _max(cpu, "Maximum")
+    cpu_min_pct = _min(cpu, "Minimum")
+    cpu_p95_pct = _percentile(cpu, 95)
 
     total_memory_gb = get_total_memory_gb(instance_type)
     memory_avg_pct = None
@@ -179,6 +197,8 @@ def get_metrics_summary(
         "instance_id": instance_id,
         "cpu_avg_pct": cpu_avg_pct,
         "cpu_max_pct": cpu_max_pct,
+        "cpu_min_pct": cpu_min_pct,
+        "cpu_p95_pct": cpu_p95_pct,
         "memory_avg_pct": memory_avg_pct,
         "memory_max_pct": memory_max_pct,
         "storage_used_gb": storage_used_gb,
@@ -187,8 +207,8 @@ def get_metrics_summary(
     }
 
     logger.info(
-        "Metrics for %s: cpu_avg=%s%% memory_avg=%s%% (coverage=%.0f%%)",
-        instance_id, cpu_avg_pct, memory_avg_pct, coverage * 100,
+        "Metrics for %s: cpu_avg=%s%% cpu_p95=%s%% memory_avg=%s%% (coverage=%.0f%%)",
+        instance_id, cpu_avg_pct, cpu_p95_pct, memory_avg_pct, coverage * 100,
     )
     return summary
 

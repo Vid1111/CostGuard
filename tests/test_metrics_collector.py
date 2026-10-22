@@ -46,7 +46,8 @@ def _seed_full_history(instance_id: str, cpu_values, memory_free_bytes, connecti
         metric_data.append({
             "MetricName": "CPUUtilization",
             "Dimensions": [{"Name": "DBInstanceIdentifier", "Value": instance_id}],
-            "Timestamp": ts, "Value": cpu_values, "Unit": "Percent",
+            "Timestamp": ts, "Unit": "Percent",
+            "Value": cpu_values[h] if isinstance(cpu_values, list) else cpu_values,
         })
         metric_data.append({
             "MetricName": "FreeableMemory",
@@ -88,10 +89,41 @@ def test_oversized_instance_shows_low_utilization():
     assert summary["instance_id"] == "prod-orders-db"
     assert summary["cpu_avg_pct"] == 15.0
     assert summary["cpu_max_pct"] == 15.0
+    assert summary["cpu_min_pct"] == 15.0
+    assert summary["cpu_p95_pct"] == 15.0
     assert 14.0 <= summary["memory_avg_pct"] <= 16.0
     assert summary["connections_avg"] == 12.0
     assert summary["observation_window_days"] == 14
     assert summary["storage_used_gb"] == 100.0  # 500 allocated - 400 free
+
+
+@mock_aws
+def test_p95_ignores_rare_spikes_but_max_keeps_them():
+    """
+    336 hours at 10% CPU with 10 one-hour spikes to 90% (3% of hours):
+    the p95 stays at 10%, while max still reports the 90% spike.
+    """
+    hours = MIN_OBSERVATION_DAYS * 24
+    cpu = [90.0 if h % 33 == 0 else 10.0 for h in range(hours)]
+    assert cpu.count(90.0) <= hours * 0.05
+
+    _seed_full_history("spiky-db", cpu_values=cpu, memory_free_bytes=int(16 * 0.8 * (1024 ** 3)), connections=5)
+    summary = get_metrics_summary("spiky-db", "db.r5.large", allocated_storage_gb=100)
+
+    assert summary["cpu_p95_pct"] == 10.0
+    assert summary["cpu_max_pct"] == 90.0
+
+
+@mock_aws
+def test_p95_reflects_regular_busy_hours():
+    """Spikes in 10% of hours are a pattern, not noise — p95 must see them."""
+    hours = MIN_OBSERVATION_DAYS * 24
+    cpu = [80.0 if h % 10 == 0 else 10.0 for h in range(hours)]
+
+    _seed_full_history("batch-db", cpu_values=cpu, memory_free_bytes=int(16 * 0.8 * (1024 ** 3)), connections=5)
+    summary = get_metrics_summary("batch-db", "db.r5.large", allocated_storage_gb=100)
+
+    assert summary["cpu_p95_pct"] == 80.0
 
 
 @mock_aws
