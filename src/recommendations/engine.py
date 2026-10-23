@@ -10,8 +10,7 @@ How a target size is chosen:
   Usage is projected onto each smaller size by scaling with the
   capacity ratio — e.g. 15% CPU on 8 vCPUs is ~60% on 2 vCPUs. The
   smallest size whose projected peaks stay under the TARGET_* ceilings
-  wins. CPU is sized on its 95th-percentile peak (rare spikes ignored)
-  and memory on its true peak.
+  wins.
 
   Safety net: the single busiest CPU minute we saw must still fit on
   the new size (projected <= 100%), so a rare spike may slow the
