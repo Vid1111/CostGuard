@@ -155,7 +155,7 @@ collector never guesses a memory percentage it can't actually compute.
 - Credentials are never hardcoded or logged.
 - `.env` is git-ignored; `.env.example` documents required variables
   without real values.
-- Recommend read-only IAM permissions (`rds:Describe*`,
+- Recommend read-only IAM permissions (`rds:DescribeDBInstances`,
   `cloudwatch:GetMetricStatistics`) — the tool never needs write access
   in V1.
 
@@ -185,3 +185,27 @@ collector never guesses a memory percentage it can't actually compute.
   hot on CPU.
 - **Burstable t3:** all t3 sizes have 2 vCPUs, so a t3 downgrade is
   limited by memory only; CPU credit balance isn't checked in V1.
+
+## 10. Decisions Made in Weeks 9-11
+
+- **One self-contained HTML file:** the report (`report/generator.py`
+  + `report/templates/report.html.j2`) has no external CSS, JS, fonts
+  or images, so it can be emailed, opened offline or printed.
+  Jinja2 autoescaping is on, so odd instance names can't break the page.
+- **Thresholds read from the code:** the "How decisions were made"
+  section reads the constants from `analysis` and `recommendations`
+  directly, so the report can never describe different rules from the
+  ones that produced it.
+- **Atomic write:** the report is written to a temp file and renamed,
+  so a crash never leaves a half-written report.
+- **RAM-only steps need memory data:** every t3 size has 2 vCPUs, so a
+  t3 step down only removes RAM. Without memory data that step is never
+  recommended.
+- **CLI:** `python -m src.main` writes the report by default;
+  `--output` picks the path and `--no-report` prints the summary only.
+- **Docker:** `Dockerfile` runs the tool as a non-root user; keys come
+  from `--env-file .env` at run time and `.dockerignore` keeps `.env`
+  out of the image.
+- **Testing at scale:** `tests/test_main.py` runs a 12-database fleet
+  through the whole pipeline, with every expected dollar figure worked
+  out by hand.

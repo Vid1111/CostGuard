@@ -1,11 +1,17 @@
-"""
-report
-------
-Public API for the report generator (Person C — Week 9-10).
+from src.report.generator import (
+    build_report_context,
+    render_report,
+    write_report,
+    generate_report,
+    default_report_path,
+    ReportGenerationError,
+)
 
-    from src.report import generate_html_report
-"""
-
-from src.report.generator import generate_html_report
-
-__all__ = ["generate_html_report"]
+__all__ = [
+    "build_report_context",
+    "render_report",
+    "write_report",
+    "generate_report",
+    "default_report_path",
+    "ReportGenerationError",
+]

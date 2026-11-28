@@ -6,7 +6,8 @@ so a wrong number in the engine shows up as a failed assertion.
 
 from src.analysis import analyze_instance
 from src.aws_connector.pricing import estimate_monthly_cost
-from src.recommendations import recommend, total_savings
+from src.analysis import insufficient_data_result
+from src.recommendations import recommend, total_savings, build_recommendations, savings_by_risk, spend_summary
 from src.recommendations.instance_sizes import smaller_sizes
 
 
@@ -132,6 +133,78 @@ def test_unknown_instance_type_has_no_recommendation():
 def test_total_savings():
     recs = [{"monthly_savings": 525.60}, {"monthly_savings": 24.82}]
     assert total_savings(recs) == {"monthly": 550.42, "annual": 6605.04}
+
+
+def test_missing_metrics_has_no_recommendation():
+    analysis = {"instance_id": "db-1", "status": "oversized", "is_oversized": True, "reason": "x"}
+    assert recommend(_db("db.r5.2xlarge"), None, analysis) is None
+
+
+def test_ram_only_step_needs_memory_data():
+    # every t3 size has 2 vCPUs, so stepping down only removes RAM -
+    # without memory data there's nothing to show that's safe
+    assert _recommend(_db("db.t3.medium"), _metrics(5.0, 8.0, None, None)) is None
+
+
+def test_recommendation_explains_its_risk():
+    rec = _recommend(_db("db.r5.2xlarge"), _metrics(15.0, 15.0, 15.0, 15.0))
+    assert rec["risk_reason"] == "projected memory peak 60%"
+    assert rec["savings_pct"] == 75.0  # 525.60 / 700.80
+
+
+def _named(name, instance_type, metrics_args):
+    db = dict(_db(instance_type), instance_id=name)
+    if metrics_args is None:
+        return db, None, insufficient_data_result(name, "too new")
+    m = dict(_metrics(*metrics_args), instance_id=name)
+    return db, m, analyze_instance(m)
+
+
+def test_build_recommendations_sorts_and_collects_no_safe_downgrade():
+    results = [
+        _named("small-saving", "db.t3.medium", (10.0, 15.0, 20.0, 25.0)),   # -> t3.small, $24.82
+        _named("big-saving", "db.r5.2xlarge", (15.0, 15.0, 15.0, 15.0)),    # -> r5.large, $525.60
+        _named("already-smallest", "db.t3.micro", (5.0, 8.0, 10.0, 12.0)),  # over-sized, nowhere to go
+        _named("busy", "db.r5.large", (70.0, 90.0, 80.0, 90.0)),            # right-sized
+        _named("new", "db.r5.large", None),                                 # skipped
+    ]
+    recs, no_safe = build_recommendations(results)
+
+    assert [r["instance_id"] for r in recs] == ["big-saving", "small-saving"]
+    assert no_safe == ["already-smallest"]
+
+
+def test_savings_by_risk_always_has_every_level():
+    recs = [
+        {"risk_level": "low", "monthly_savings": 24.82},
+        {"risk_level": "medium", "monthly_savings": 525.60},
+        {"risk_level": "medium", "monthly_savings": 100.00},
+    ]
+    assert savings_by_risk(recs) == {
+        "low": {"count": 1, "monthly": 24.82},
+        "medium": {"count": 2, "monthly": 625.60},
+        "high": {"count": 0, "monthly": 0.0},
+    }
+
+
+def test_spend_summary():
+    instances = [
+        {"instance_id": "a", "monthly_cost": 700.80},
+        {"instance_id": "b", "monthly_cost": 175.20},
+        {"instance_id": "c", "monthly_cost": 0.0},  # unknown type
+    ]
+    s = spend_summary(instances, [{"monthly_savings": 525.60}])
+
+    assert s["current_monthly"] == 876.00
+    assert s["current_annual"] == 10512.00
+    assert s["projected_monthly"] == 350.40
+    assert s["projected_annual"] == 4204.80
+    assert s["savings_pct"] == 60.0
+    assert s["unpriced"] == ["c"]
+
+
+def test_spend_summary_with_no_instances():
+    assert spend_summary([], [])["savings_pct"] == 0.0
 
 
 def test_smaller_sizes_order():
