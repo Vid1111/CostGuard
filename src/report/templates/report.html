@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CostGuard Report — {{ generated_at }}</title>
+  <style>
+    :root {
+      --primary: #1a56db;
+      --success: #0e9f6e;
+      --warning: #d97706;
+      --danger:  #e02424;
+      --bg:      #f1f5f9;
+      --card:    #ffffff;
+      --border:  #e2e8f0;
+      --text:    #0f172a;
+      --muted:   #64748b;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; }
+
+    /* ── HEADER ── */
+    header {
+      background: linear-gradient(135deg, #1e3a8a 0%, #1a56db 50%, #0891b2 100%);
+      color: #fff;
+      padding: 36px 40px 28px;
+    }
+    .header-top { display: flex; align-items: center; gap: 18px; margin-bottom: 8px; }
+    .logo { font-size: 2rem; font-weight: 900; letter-spacing: -1px; }
+    .logo span { color: #7dd3fc; }
+    .header-sub { font-size: .9rem; opacity: .8; }
+    .header-meta { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 24px; }
+    .meta-item { font-size: .82rem; opacity: .85; }
+    .meta-item strong { display: block; font-size: 1.4rem; font-weight: 800; opacity: 1; }
+
+    /* ── LAYOUT ── */
+    main { max-width: 1200px; margin: 0 auto; padding: 32px 24px 64px; }
+    section { margin-bottom: 40px; }
+    h2 { font-size: 1.1rem; font-weight: 700; color: var(--primary); margin-bottom: 16px;
+         padding-bottom: 8px; border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 8px; }
+
+    /* ── SUMMARY CARDS ── */
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .s-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+    .s-card .value { font-size: 1.9rem; font-weight: 800; }
+    .s-card .label { font-size: .78rem; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: .07em; }
+    .s-card.green  { border-left: 4px solid var(--success); }
+    .s-card.blue   { border-left: 4px solid var(--primary); }
+    .s-card.orange { border-left: 4px solid var(--warning); }
+    .s-card.red    { border-left: 4px solid var(--danger); }
+
+    /* ── SAVINGS BANNER ── */
+    .savings-banner {
+      background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+      color: #fff; border-radius: 14px; padding: 26px 30px;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;
+      margin-bottom: 32px;
+    }
+    .savings-banner h3 { font-size: .85rem; text-transform: uppercase; letter-spacing: .1em; opacity: .75; margin-bottom: 4px; }
+    .savings-banner .amount { font-size: 2.2rem; font-weight: 900; color: #6ee7b7; }
+    .savings-banner .annual { font-size: 1rem; opacity: .8; }
+
+    /* ── TABLE ── */
+    .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+    table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+    thead th { background: #1e3a8a; color: #fff; padding: 11px 14px; text-align: left; font-weight: 600; white-space: nowrap; }
+    tbody tr:nth-child(even) { background: #f8fafc; }
+    tbody tr:hover { background: #eff6ff; }
+    tbody td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* ── BADGES ── */
+    .badge { display: inline-block; border-radius: 6px; padding: 2px 9px; font-size: .73rem; font-weight: 700; white-space: nowrap; }
+    .badge-oversized { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
+    .badge-ok        { background: #f0fdf4; color: #065f46; border: 1px solid #6ee7b7; }
+    .badge-skipped   { background: #f8fafc; color: #64748b; border: 1px solid #cbd5e1; }
+    .badge-low       { background: #d1fae5; color: #065f46; }
+    .badge-medium    { background: #fef3c7; color: #92400e; }
+    .badge-high      { background: #fee2e2; color: #991b1b; }
+    .badge-multi-az  { background: #dbeafe; color: #1e40af; font-size: .68rem; }
+
+    /* ── RECOMMENDATION CARDS ── */
+    .rec-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 18px; }
+    .rec-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+    .rec-card-header { background: #1e3a8a; color: #fff; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; }
+    .rec-card-header .iid { font-weight: 700; font-size: .95rem; }
+    .rec-card-body { padding: 18px; }
+    .rec-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 12px; }
+    .rec-type { flex: 1; }
+    .rec-type .label { font-size: .72rem; text-transform: uppercase; color: var(--muted); letter-spacing: .07em; margin-bottom: 3px; }
+    .rec-type .val { font-weight: 700; font-size: .95rem; }
+    .rec-type .cost { font-size: .82rem; color: var(--muted); }
+    .rec-arrow { font-size: 1.2rem; color: var(--success); font-weight: 900; }
+    .rec-savings { background: #f0fdf4; border: 1px solid #6ee7b7; border-radius: 8px; padding: 10px 14px; margin-top: 12px; display: flex; justify-content: space-between; }
+    .rec-savings .s-label { font-size: .75rem; color: var(--muted); }
+    .rec-savings .s-val { font-weight: 800; color: var(--success); font-size: 1.05rem; }
+    .rec-proj { margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .proj-item { background: #f8fafc; border-radius: 6px; padding: 7px 10px; text-align: center; }
+    .proj-item .p-label { font-size: .68rem; color: var(--muted); text-transform: uppercase; }
+    .proj-item .p-val { font-weight: 700; font-size: .88rem; margin-top: 2px; }
+    .rec-reason { font-size: .78rem; color: var(--muted); margin-top: 10px; font-style: italic; border-top: 1px solid var(--border); padding-top: 8px; }
+
+    /* ── SKIPPED / NO REC ── */
+    .notice { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 10px; padding: 14px 18px; font-size: .85rem; color: #78350f; margin-top: 8px; }
+
+    /* ── FOOTER ── */
+    footer { text-align: center; color: var(--muted); font-size: .78rem; padding: 24px; border-top: 1px solid var(--border); }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════ HEADER ════════════════════════ -->
+<header>
+  <div class="header-top">
+    <div>
+      <div class="logo">Cost<span>Guard</span></div>
+      <div class="header-sub">AWS RDS Cost Optimization Report</div>
+    </div>
+  </div>
+  <div class="header-meta">
+    <div class="meta-item"><strong>{{ instance_count }}</strong>Instances Scanned</div>
+    <div class="meta-item"><strong>{{ rec_count }}</strong>Recommendations</div>
+    <div class="meta-item"><strong>${{ "%.2f"|format(total_monthly) }}</strong>Potential Monthly Savings</div>
+    <div class="meta-item"><strong>${{ "%.2f"|format(total_annual) }}</strong>Potential Annual Savings</div>
+    <div class="meta-item"><strong>{{ skipped_count }}</strong>Skipped (insufficient data)</div>
+    <div class="meta-item"><strong>14 days</strong>Observation Window</div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ════════ SAVINGS BANNER ════════ -->
+  {% if recommendations %}
+  <div class="savings-banner">
+    <div>
+      <h3>Total Potential Savings</h3>
+      <div class="amount">${{ "%.2f"|format(total_monthly) }}<small style="font-size:1rem;font-weight:500;opacity:.8;">/month</small></div>
+    </div>
+    <div>
+      <h3>Annualized</h3>
+      <div class="amount">${{ "{:,.2f}".format(total_annual) }}</div>
+      <div class="annual">across {{ rec_count }} instance{{ 's' if rec_count != 1 else '' }}</div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:.85rem; opacity:.75;">Generated</div>
+      <div style="font-weight:700;">{{ generated_at }}</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ════════ SUMMARY CARDS ════════ -->
+  <section>
+    <h2>📊 Summary</h2>
+    <div class="summary-grid">
+      <div class="s-card blue">
+        <div class="value">{{ instance_count }}</div>
+        <div class="label">Total RDS Instances</div>
+      </div>
+      <div class="s-card red">
+        <div class="value">{{ rec_count }}</div>
+        <div class="label">Over-Sized (Actionable)</div>
+      </div>
+      <div class="s-card green">
+        <div class="value">{{ instance_count - rec_count - skipped_count }}</div>
+        <div class="label">Right-Sized</div>
+      </div>
+      <div class="s-card orange">
+        <div class="value">{{ skipped_count }}</div>
+        <div class="label">Skipped (< 14 days data)</div>
+      </div>
+      <div class="s-card green">
+        <div class="value">${{ "%.2f"|format(total_monthly) }}</div>
+        <div class="label">Monthly Savings Available</div>
+      </div>
+      <div class="s-card green">
+        <div class="value">${{ "{:,.0f}".format(total_annual) }}</div>
+        <div class="label">Annual Savings Available</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ ALL INSTANCES TABLE ════════ -->
+  <section>
+    <h2>🗄️ All RDS Instances — Usage &amp; Status</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Instance ID</th>
+            <th>Type</th>
+            <th>Engine</th>
+            <th>Region</th>
+            <th>Storage</th>
+            <th>Multi-AZ</th>
+            <th>Est. $/mo</th>
+            <th>CPU avg</th>
+            <th>CPU p95</th>
+            <th>CPU max</th>
+            <th>Mem avg</th>
+            <th>Mem peak</th>
+            <th>Storage used</th>
+            <th>Connections</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td><strong>{{ row.instance_id }}</strong></td>
+            <td><code>{{ row.instance_type }}</code></td>
+            <td>{{ row.engine }}</td>
+            <td>{{ row.region }}</td>
+            <td>{{ row.storage_gb }} GB</td>
+            <td>{% if row.multi_az %}<span class="badge badge-multi-az">YES</span>{% else %}No{% endif %}</td>
+            <td>${{ "%.2f"|format(row.monthly_cost) }}</td>
+            <td>{{ row.cpu_avg }}</td>
+            <td>{{ row.cpu_p95 }}</td>
+            <td>{{ row.cpu_max }}</td>
+            <td>{{ row.memory_avg }}</td>
+            <td>{{ row.memory_max }}</td>
+            <td>{{ row.storage_used }}</td>
+            <td>{{ row.connections }}</td>
+            <td>
+              {% if row.status == 'oversized' %}
+                <span class="badge badge-oversized">OVER-SIZED</span>
+              {% elif row.status == 'right_sized' %}
+                <span class="badge badge-ok">OK</span>
+              {% else %}
+                <span class="badge badge-skipped">SKIPPED</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ════════ RECOMMENDATIONS ════════ -->
+  <section>
+    <h2>💡 Downgrade Recommendations</h2>
+    {% if recommendations %}
+    <div class="rec-grid">
+      {% for rec in recommendations %}
+      <div class="rec-card">
+        <div class="rec-card-header">
+          <span class="iid">{{ rec.instance_id }}</span>
+          <span class="badge badge-{{ rec.risk_level }}">{{ rec.risk_level | upper }} RISK</span>
+        </div>
+        <div class="rec-card-body">
+          <div class="rec-row">
+            <div class="rec-type">
+              <div class="label">Current</div>
+              <div class="val">{{ rec.current_type }}</div>
+              <div class="cost">${{ "%.2f"|format(rec.current_cost) }}/mo</div>
+            </div>
+            <div class="rec-arrow">→</div>
+            <div class="rec-type">
+              <div class="label">Recommended</div>
+              <div class="val" style="color:var(--success);">{{ rec.recommended_type }}</div>
+              <div class="cost">${{ "%.2f"|format(rec.recommended_cost) }}/mo</div>
+            </div>
+          </div>
+
+          <div class="rec-savings">
+            <div>
+              <div class="s-label">Monthly Savings</div>
+              <div class="s-val">${{ "%.2f"|format(rec.monthly_savings) }}</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="s-label">Annual Savings</div>
+              <div class="s-val">${{ "{:,.2f}".format(rec.annual_savings) }}</div>
+            </div>
+          </div>
+
+          <div class="rec-proj">
+            <div class="proj-item">
+              <div class="p-label">Proj. CPU p95</div>
+              <div class="p-val">{{ rec.projected_cpu_peak_pct if rec.projected_cpu_peak_pct is not none else 'n/a' }}%</div>
+            </div>
+            <div class="proj-item">
+              <div class="p-label">Proj. CPU max</div>
+              <div class="p-val">{{ rec.projected_cpu_max_pct if rec.projected_cpu_max_pct is not none else 'n/a' }}%</div>
+            </div>
+            <div class="proj-item">
+              <div class="p-label">Proj. Memory</div>
+              <div class="p-val">{{ rec.projected_memory_peak_pct if rec.projected_memory_peak_pct is not none else 'n/a' }}%</div>
+            </div>
+          </div>
+
+          <div class="rec-reason">{{ rec.reason }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="notice">
+      ✅ No downgrade recommendations — every instance with sufficient data is right-sized.
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- ════════ NOTES ════════ -->
+  <section>
+    <h2>📋 Notes &amp; Assumptions</h2>
+    <div class="notice" style="background:#eff6ff; border-color:#93c5fd; color:#1e40af;">
+      <ul style="padding-left:18px; line-height:2;">
+        <li>Prices are <strong>on-demand estimates</strong> (compute only). Storage, IOPS, backups and Reserved Instance discounts are not included.</li>
+        <li>Savings are accurate even with estimate prices — a downsize keeps the same storage, so only compute cost changes.</li>
+        <li>Recommendations are <strong>same-family only</strong> (e.g. r5 → r5). Cross-family moves planned for V2.</li>
+        <li>Instances with fewer than 50% of expected CloudWatch datapoints over the 14-day window are <strong>skipped</strong> rather than incorrectly labelled idle.</li>
+        <li>Multi-AZ instances are billed at 2× the single-AZ price; savings are also doubled.</li>
+        <li>CPU uses the <strong>95th percentile</strong> of hourly peaks to avoid rare spikes blocking a safe downgrade.</li>
+        <li>Memory uses the <strong>true peak</strong> (running out of RAM crashes a database; hot CPU only slows it).</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  CostGuard — AWS RDS Cost Optimizer &nbsp;|&nbsp; Report generated {{ generated_at }} &nbsp;|&nbsp;
+  Prices are on-demand estimates only. Verify with your AWS Cost Explorer before taking action.
+</footer>
+
+</body>
+</html>
