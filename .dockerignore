@@ -1,0 +1,11 @@
+# keep secrets and local clutter out of the image
+.env
+.aws/
+.git/
+venv/
+.venv/
+reports/
+__pycache__/
+*.pyc
+.pytest_cache/
+docs/
