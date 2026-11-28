@@ -1,18 +1,16 @@
 """
-CostGuard - the full V1 pipeline.
+CostGuard — Week 7-8 checkpoint
 
-Connects to AWS, lists every RDS instance, pulls 14 days of CloudWatch
-usage (CPU, memory, storage, connections) for each one, flags the
-over-sized instances, recommends a cheaper instance type with the
-monthly/annual savings, prints a summary and writes an HTML report.
+Connects to AWS, lists every RDS instance, pulls real CloudWatch usage
+metrics (CPU, memory, storage, connections) for each one, flags the
+over-sized instances, and recommends a cheaper instance type with the
+monthly/annual savings. Built on top of the Week 3-6 AWS Connector and
+Metrics Collector.
 
 Usage:
-    python -m src.main                         # report in reports/costguard-report-<timestamp>.html
-    python -m src.main --output my-report.html
-    python -m src.main --no-report             # terminal output only
+    python -m src.main
 """
 
-import argparse
 import logging
 import sys
 
@@ -20,8 +18,8 @@ from src.aws_connector import list_db_instances, AWSConnectionError
 from src.metrics import get_metrics_summary, MetricsCollectionError, InsufficientMetricsError
 from src.metrics.collector import MIN_OBSERVATION_DAYS
 from src.analysis import analyze_instance, insufficient_data_result, OVERSIZED, INSUFFICIENT_DATA
-from src.recommendations import build_recommendations, total_savings
-from src.report import generate_report, ReportGenerationError
+from src.recommendations import recommend, total_savings
+from src.report import generate_html_report
 
 
 def _pct(value) -> str:
@@ -65,9 +63,9 @@ def _collect_and_analyze(instances: list[dict]) -> list[tuple[dict, dict | None,
             )
             results.append((db, metrics, analyze_instance(metrics)))
         except InsufficientMetricsError as e:
-            results.append((db, None, insufficient_data_result(db["instance_id"], f"skipped - {e}")))
+            results.append((db, None, insufficient_data_result(db["instance_id"], f"skipped — {e}")))
         except MetricsCollectionError as e:
-            results.append((db, None, insufficient_data_result(db["instance_id"], f"error - {e}")))
+            results.append((db, None, insufficient_data_result(db["instance_id"], f"error — {e}")))
     return results
 
 
@@ -94,11 +92,22 @@ def _print_metrics_table(results) -> None:
     print()
 
 
-def _print_recommendations(results, recommendations: list[dict], no_safe_downgrade: list[str]) -> None:
+def _print_recommendations(results) -> None:
+    recommendations = []
+    no_safe_downgrade = []
+    for db, m, analysis in results:
+        if analysis["status"] != OVERSIZED:
+            continue
+        rec = recommend(db, m, analysis)
+        if rec:
+            recommendations.append(rec)
+        else:
+            no_safe_downgrade.append(db["instance_id"])
+
     skipped = sum(1 for _, _, a in results if a["status"] == INSUFFICIENT_DATA)
 
     if not recommendations:
-        print("No downgrade recommendations - every instance with enough data is right-sized.\n")
+        print("No downgrade recommendations — every instance with enough data is right-sized.\n")
     else:
         print("Recommendations:\n")
         header = f"{'Instance ID':<25}{'Current':<16}{'$/mo':<11}{'Recommended':<16}{'$/mo':<11}{'Save $/mo':<12}{'Save $/yr':<12}{'Risk':<8}"
@@ -116,23 +125,11 @@ def _print_recommendations(results, recommendations: list[dict], no_safe_downgra
     if no_safe_downgrade:
         print(f"Over-sized but no safe smaller size in its family: {', '.join(no_safe_downgrade)}")
     if skipped:
-        print(f"{skipped} instance(s) skipped - not enough CloudWatch data to judge.")
+        print(f"{skipped} instance(s) skipped — not enough CloudWatch data to judge.")
     print()
 
 
-def _parse_args(argv: list[str] | None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        prog="python -m src.main",
-        description="Find over-sized AWS RDS databases and how much downsizing them would save.",
-    )
-    parser.add_argument("-o", "--output", help="where to write the HTML report "
-                        "(default: reports/costguard-report-<timestamp>.html)")
-    parser.add_argument("--no-report", action="store_true", help="print the summary only, don't write the HTML report")
-    return parser.parse_args(argv or [])
-
-
-def main(argv: list[str] | None = None) -> int:
-    args = _parse_args(argv)
+def main() -> int:
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
 
     try:
@@ -148,22 +145,27 @@ def main(argv: list[str] | None = None) -> int:
     _print_instance_table(instances)
     results = _collect_and_analyze(instances)
     _print_metrics_table(results)
+    _print_recommendations(results)
 
-    recommendations, no_safe_downgrade = build_recommendations(results)
-    _print_recommendations(results, recommendations, no_safe_downgrade)
-
-    if args.no_report:
-        return 0
+    # HTML Report (Week 9-10 - Person C)
+    metrics_map = {db["instance_id"]: m for db, m, _ in results}
+    analyses    = {db["instance_id"]: a for db, _, a in results}
+    recs = []
+    for db, m, a in results:
+        if a["status"] == OVERSIZED and m is not None:
+            rec = recommend(db, m, a)
+            if rec:
+                recs.append(rec)
+    totals = total_savings(recs)
 
     try:
-        path = generate_report(instances, results, recommendations, no_safe_downgrade, args.output)
-    except ReportGenerationError as e:
-        print(f"Could not write the HTML report: {e}\n")
-        return 1
+        report_path = generate_html_report(instances, metrics_map, analyses, recs, totals)
+        print(f"\n  HTML report saved to: {report_path}\n")
+    except Exception as exc:
+        print(f"\n  Warning: could not write HTML report - {exc}\n")
 
-    print(f"HTML report written to {path}\n")
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(main())
